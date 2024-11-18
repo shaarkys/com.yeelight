@@ -13,13 +13,21 @@
 	"version": "3.0.18",
 	"compatibility": ">=5.0.0",
 	"author": {
-		"name": "Jelger Haanstra",
+		"name": "Bretislav Kubesa",
 		"email": "homey@solidewebservices.com"
 	},
+	"contributors": {
+		"developers": [
+		  {
+		"name": "Jelger Haanstra",
+		"website": "https://github.com/shaarkys"
+		  }
+		]
+	  },	
   "contributing": {
     "donate": {
       "paypal": {
-        "username": "jghaanstra"
+        "username": "bkubesa"
       }
     }
   },

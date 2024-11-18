@@ -57,7 +57,7 @@ class YeelightDriver extends Homey.Driver {
       let devices = [];
 
       // for device identification purposes
-      this.log(result);
+      this.homey.app.log(result);
 
       for (let i in result) {
         var name = '';
@@ -143,7 +143,7 @@ class YeelightDriver extends Homey.Driver {
 
       return devices;
     } catch (error) {
-      this.log(error);
+      this.homey.app.log(error);
       throw new Error(error);
     }
   }

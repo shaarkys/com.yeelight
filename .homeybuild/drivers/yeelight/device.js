@@ -10,6 +10,10 @@ class YeelightDevice extends Homey.Device {
   async onInit() {
     if (!this.util) this.util = new Util({homey: this.homey});
 
+     // Initialize dimMinTime and dimMaxTime
+    this.dimMinTime = 0;
+    this.dimMaxTime = 0
+
     /* update the paired devices list when a device is initialized */
     this.homey.setTimeout(async () => { await this.util.fillAddedDevices(); }, 2000);
 
@@ -207,10 +211,10 @@ class YeelightDevice extends Homey.Device {
           this.socket.setTimeout(0);
         });
       } else {
-        this.log("Yeelight - trying to create socket, but connection not cleaned up previously.");
+        this.homey.app.log("Yeelight - trying to create socket, but connection not cleaned up previously.");
       }
     } catch (error) {
-  		this.log("Yeelight - error creating socket: " + error);
+  		this.homey.app.log("Yeelight - error creating socket: " + error);
   	}
 
     this.socket.on('connect', async () => {
@@ -228,20 +232,21 @@ class YeelightDevice extends Homey.Device {
     });
 
     this.socket.on('error', (error) => {
-      this.log("Yeelight - socket error: "+ error);
+      this.homey.app.log(`${this.getName()} - socket error: ${error}`);
       this.connected = false;
 
       if (this.socket) {
         this.socket.destroy();
       }
 
-      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET' || error == 'Error: Error sending command') {
-        this.log("Yeelight - trying to reconnect in 6 seconds.");
-        var time2retry = 6000;
+      let time2retry;
+      if (error.code === 'ETIMEDOUT' || error.code === 'ECONNRESET' || error.message === 'Error sending command') {
+        this.homey.app.log(`${this.getName()} - trying to reconnect in 6 seconds.`);
+        time2retry = 6000;
       } else {
-        this.log("Yeelight - trying to reconnect in 60 seconds.");
-        var time2retry = 60000;
-      }
+        this.homey.app.log(`${this.getName()} - trying to reconnect in 60 seconds.`);
+        time2retry = 60000;
+      }     
 
       if (this.reconnect === null) {
         this.reconnect = this.homey.setTimeout(() => {
@@ -442,7 +447,7 @@ class YeelightDevice extends Homey.Device {
             }
 
           } catch (error) {
-            this.log('Unable to process message because of error: '+ error);
+            this.homey.app.log('Unable to process message because of error: '+ error);
           }
         } else if (parsed_message.includes('result')) {
           try {
@@ -495,7 +500,7 @@ class YeelightDevice extends Homey.Device {
               }
             }
           } catch (error) {
-            this.log('Unable to process message because of error: '+ error);
+            this.homey.app.log('Unable to process message because of error: '+ error);
           }
         }
       } catch (error) {
@@ -505,108 +510,102 @@ class YeelightDevice extends Homey.Device {
   }
 
   /* send commands to devices using their socket connection */
-  sendCommand(id, command) {
-    return new Promise((resolve, reject) => {
-      if(this.connecting && this.connected === false){
-        return reject('Unable to send command because socket is still connecting');
-      } else if (this.connected === false && this.socket !== null) {
-        this.socket.emit('error', new Error('Connection to device broken'));
-        return reject('Connection to device broken');
-      } else if (this.socket === null) {
-        return reject('Unable to send command because socket is not available');
-    	} else {
-        this.socket.write(command + '\r\n');
-        return resolve(true);
-      }
-    });
-  }
-
-  /* check if device is connecting or connected */
-  isConnected(id) {
-  	if (this.connecting === true || this.connected === true) {
+  async sendCommand(id, command) {
+    if (this.connecting && !this.connected) {
+      throw new Error('Cannot send command: Socket is still connecting.');
+    } else if (!this.connected) {
+      throw new Error('Cannot send command: Connection to device is broken.');
+    } else if (!this.socket) {
+      throw new Error('Cannot send command: Socket is not available.');
+    } else {
+      this.socket.write(command + '\r\n');
       return true;
-  	} else {
-      return false;
     }
+  }
+ 
+  /* check if device is connecting or connected */
+  isConnected() {
+    return this.connecting || this.connected;
   }
 
   async saveState(device) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        let savedState = {
-          "onoff": await device.getCapabilityValue("onoff"),
-          "dim": await device.getCapabilityValue("dim")
-        }
-        if (device.hasCapability("light_temperature")) {
-          savedState.light_temperature = await device.getCapabilityValue("light_temperature");
-        }
-        if (device.hasCapability("light_hue")) {
-          savedState.light_hue = await device.getCapabilityValue("light_hue");
-        }
-        if (device.hasCapability("light_saturation")) {
-          savedState.light_saturation = await device.getCapabilityValue("light_saturation");
-        }
-        if (device.hasCapability("night_mode")) {
-          savedState.night_mode = await device.getCapabilityValue("night_mode");
-        }
-        if (device.hasCapability("onoff.bg")) {
-          savedState.onoff_bg = await device.getCapabilityValue("onoff.bg");
-        }
-        if (device.hasCapability("dim.bg")) {
-          savedState.dim_bg = await device.getCapabilityValue("dim.bg");
-        }
-        if (device.hasCapability("light_temperature.bg")) {
-          savedState.light_temperature_bg = await device.getCapabilityValue("light_temperature.bg");
-        }
-
-        await device.setStoreValue("savedstate", savedState);
-
-        return resolve(true);
-      } catch (error) {
-        return reject(error);
+    try {
+      let savedState = {
+        "onoff": await device.getCapabilityValue("onoff"),
+        "dim": await device.getCapabilityValue("dim")
+      };
+      if (device.hasCapability("light_temperature")) {
+        savedState.light_temperature = await device.getCapabilityValue("light_temperature");
       }
-    })
-  }
+      if (device.hasCapability("light_hue")) {
+        savedState.light_hue = await device.getCapabilityValue("light_hue");
+      }
+      if (device.hasCapability("light_saturation")) {
+        savedState.light_saturation = await device.getCapabilityValue("light_saturation");
+      }
+      if (device.hasCapability("night_mode")) {
+        savedState.night_mode = await device.getCapabilityValue("night_mode");
+      }
+      if (device.hasCapability("onoff.bg")) {
+        savedState.onoff_bg = await device.getCapabilityValue("onoff.bg");
+      }
+      if (device.hasCapability("dim.bg")) {
+        savedState.dim_bg = await device.getCapabilityValue("dim.bg");
+      }
+      if (device.hasCapability("light_temperature.bg")) {
+        savedState.light_temperature_bg = await device.getCapabilityValue("light_temperature.bg");
+      }
+  
+      await device.setStoreValue("savedstate", savedState);
+  
+      return true;
+    } catch (error) {
+      this.error('Error in saveState:', error);
+      throw error;
+    }
+  } 
 
   async setState(device) {
-    return new Promise(async (resolve, reject) => {
-      try {
-        let savedState = device.getStoreValue("savedstate");
-
-        if (device.getCapabilityValue("onoff") != savedState.onoff) {
-          device.triggerCapabilityListener("onoff", savedState.onoff);
-        }
-        if (device.getCapabilityValue("dim") != savedState.dim) {
-          device.triggerCapabilityListener("dim", savedState.dim);
-        }
-        if (device.getCapabilityValue("light_temperature") != savedState.light_temperature) {
-          device.triggerCapabilityListener("light_temperature", savedState.light_temperature);
-        }
-        if (device.getCapabilityValue("light_hue") != savedState.light_hue) {
-          device.triggerCapabilityListener("light_hue", savedState.light_hue);
-        }
-        if (device.getCapabilityValue("light_saturation") != savedState.light_saturation) {
-          device.triggerCapabilityListener("light_saturation", savedState.light_saturation);
-        }
-        if (device.getCapabilityValue("night_mode") != savedState.night_mode) {
-          device.triggerCapabilityListener("night_mode", savedState.night_mode);
-        }
-        if (device.getCapabilityValue("onoff.bg") != savedState.onoff_bg) {
-          device.triggerCapabilityListener("onoff.bg", savedState.onoff_bg);
-        }
-        if (device.getCapabilityValue("dim.bg") != savedState.dim_bg) {
-          device.triggerCapabilityListener("dim.bg", savedState.dim_bg);
-        }
-        if (device.getCapabilityValue("light_temperature.bg") != savedState.light_temperature_bg) {
-          device.triggerCapabilityListener("light_temperature.bg", savedState.light_temperature_bg);
-        }
-
-        return resolve(true);
-      } catch (error) {
-        return reject(error);
+    try {
+      let savedState = await device.getStoreValue("savedstate");
+      if (!savedState) {
+        throw new Error('No saved state found.');
       }
-    })
-  }
+  
+      if (device.getCapabilityValue("onoff") !== savedState.onoff) {
+        await device.triggerCapabilityListener("onoff", savedState.onoff);
+      }
+      if (device.getCapabilityValue("dim") !== savedState.dim) {
+        await device.triggerCapabilityListener("dim", savedState.dim);
+      }
+      if (device.hasCapability("light_temperature") && device.getCapabilityValue("light_temperature") !== savedState.light_temperature) {
+        await device.triggerCapabilityListener("light_temperature", savedState.light_temperature);
+      }
+      if (device.hasCapability("light_hue") && device.getCapabilityValue("light_hue") !== savedState.light_hue) {
+        await device.triggerCapabilityListener("light_hue", savedState.light_hue);
+      }
+      if (device.hasCapability("light_saturation") && device.getCapabilityValue("light_saturation") !== savedState.light_saturation) {
+        await device.triggerCapabilityListener("light_saturation", savedState.light_saturation);
+      }
+      if (device.hasCapability("night_mode") && device.getCapabilityValue("night_mode") !== savedState.night_mode) {
+        await device.triggerCapabilityListener("night_mode", savedState.night_mode);
+      }
+      if (device.hasCapability("onoff.bg") && device.getCapabilityValue("onoff.bg") !== savedState.onoff_bg) {
+        await device.triggerCapabilityListener("onoff.bg", savedState.onoff_bg);
+      }
+      if (device.hasCapability("dim.bg") && device.getCapabilityValue("dim.bg") !== savedState.dim_bg) {
+        await device.triggerCapabilityListener("dim.bg", savedState.dim_bg);
+      }
+      if (device.hasCapability("light_temperature.bg") && device.getCapabilityValue("light_temperature.bg") !== savedState.light_temperature_bg) {
+        await device.triggerCapabilityListener("light_temperature.bg", savedState.light_temperature_bg);
+      }
+  
+      return true;
+    } catch (error) {
+      this.error('Error in setState:', error);
+      throw error;
+    }
+  }  
 
 }
 
