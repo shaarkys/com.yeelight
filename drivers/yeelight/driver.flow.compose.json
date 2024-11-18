@@ -1,0 +1,365 @@
+{
+  "conditions": [
+    {
+      "id": "yeelightNightmode",
+      "title": {
+        "en": "Night Mode !{{is|is not}} on",
+        "nl": "Nacht modus !{{is|is niet}} aan"
+      },
+      "args": []
+    }
+  ],
+  "actions": [
+    {
+      "id": "yeelightDefault",
+      "title": {
+        "en": "Set default on state",
+        "nl": "Stel standaard opstart status in"
+      },
+      "hint": {
+        "en": "Use this card to save the current state as the default on state of your Yeelight",
+        "nl": "Gebruik deze actie om de huidige status op te slaan als de standaard aan status van je Yeelight"
+      },
+      "args": []
+    },
+    {
+      "id": "yeelightFlowBrightness",
+      "title": {
+        "en": "Change brightness over time",
+        "nl": "Wijzig helderheid over tijd"
+      },
+      "titleFormatted": {
+        "en": "Change brightness to [[brightness]], temperature to [[temperature]] in [[duration]] milliseconds and recover to [[action]]",
+        "nl": "Wijzig helderheid naar [[brightness]], temperatuur naar [[temperature]] in [[duration]] milliseconden en herstel naar [[action]]"
+      },
+      "hint": {
+        "en": "Use this card to create a changing effect of temperature and brightness over time (duration in milliseconds, temperature in Kelvin 1700-6500 and brightness in percentage)",
+        "nl": "Gebruik deze actie voor een veranderd effect van licht temperatuur en helderheid over tijd (doorlooptijd in milliseconden, temperatuur in Kelvin 1700-6500 en helderheid in percentage)"
+      },
+      "args": [
+        {
+          "name": "action",
+          "type": "dropdown",
+          "placeholder": {
+            "en": "Finish action",
+            "nl": "Afrondactie"
+          },
+          "values": [
+            {
+              "id": "0",
+              "label": {
+                "en": "Recover to previous state",
+                "nl": "Terug naar oorspronkelijke staat"
+              }
+            },
+            {
+              "id": "1",
+              "label": {
+                "en": "Stay at the state",
+                "nl": "Behoud staat"
+              }
+            },
+            {
+              "id": "2",
+              "label": {
+                "en": "Turn off light",
+                "nl": "Licht uit"
+              }
+            }
+          ]
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "placeholder": {
+            "en": "Duration in milliseconds",
+            "nl": "Doorlooptijd in milliseconden"
+          },
+          "min": 50,
+          "step": 1
+        },
+        {
+          "name": "temperature",
+          "type": "number",
+          "placeholder": {
+            "en": "Temperature",
+            "nl": "Temperatuur"
+          },
+          "min": 1700,
+          "max": 6500,
+          "step": 1
+        },
+        {
+          "name": "brightness",
+          "type": "number",
+          "placeholder": {
+            "en": "Brightness",
+            "nl": "Helderheid"
+          },
+          "min": 0,
+          "max": 100,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "yeelightTemperatureScene",
+      "title": {
+        "en": "Temperature and brightness",
+        "nl": "Temperatuur en helderheid"
+      },
+      "titleFormatted": {
+        "en": "Change temperature to [[temperature]] and brightness to [[brightness]]",
+        "nl": "Wijzig temperatuur naar [[temperature]] en helderheid naar [[brightness]]"
+      },
+      "hint": {
+        "en": "Use this card to set the temperature and brightness directly (temperature in Kelvin 1700-6500 and brightness in percentage)",
+        "nl": "Gebruik deze actie om de temperatuur en helderheid direct in te stellen (temperatuur in Kelvin 1700-6500 en helderheid in percentage)"
+      },
+      "args": [
+        {
+          "name": "temperature",
+          "type": "number",
+          "placeholder": {
+            "en": "Temperature",
+            "nl": "Temperatuur"
+          },
+          "min": 1700,
+          "max": 6500,
+          "step": 1
+        },
+        {
+          "name": "brightness",
+          "type": "number",
+          "placeholder": {
+            "en": "Brightness",
+            "nl": "Helderheid"
+          },
+          "min": 0,
+          "max": 100,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "yeelightColorScene",
+      "title": {
+        "en": "Color and brightness",
+        "nl": "Kleur en helderheid"
+      },
+      "titleFormatted": {
+        "en": "Change color to [[color]] and brightness to [[brightness]]",
+        "nl": "Wijzig kleur naar [[color]] en helderheid naar [[brightness]]"
+      },
+      "hint": {
+        "en": "Use this card to set the color and brightness directly (brightness in percentage)",
+        "nl": "Gebruik deze actie om de kleur en helderheid direct in te stellen (helderheid in percentage)"
+      },
+      "args": [
+        {
+          "name": "color",
+          "type": "color"
+        },
+        {
+          "name": "brightness",
+          "type": "number",
+          "placeholder": {
+            "en": "Brightness",
+            "nl": "Helderheid"
+          },
+          "min": 0,
+          "max": 100,
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "yeelightCustomCommand",
+      "title": {
+        "en": "Send command (advanced)",
+        "nl": "Verstuur commando (geadvanceerd)"
+      },
+      "titleFormatted": {
+        "en": "Send advanced command [[command]] ",
+        "nl": "Verstuur geadvanceerd commando [[command]]"
+      },
+      "hint": {
+        "en": "Advanced users can use this card to send any custom command, see the Yeelight documentation for options",
+        "nl": "Geadvanceerde gebruikers kunnen deze actie gebruiken om maatwerk commands te versturen, zie de Yeelight documentatie voor opties"
+      },
+      "args": [
+        {
+          "name": "command",
+          "type": "text",
+          "placeholder": {
+            "en": "Custom command",
+            "nl": "Aangepast commando"
+          }
+        }
+      ]
+    },
+    {
+      "id": "yeelightNightMode",
+      "title": {
+        "en": "Toggle Night Mode",
+        "nl": "Schakel nacht modus"
+      },
+      "titleFormatted": {
+        "en": "Toggle night mode to [[mode]]",
+        "nl": "Schakel nacht modus naar [[mode]]"
+      },
+      "hint": {
+        "en": "Use this card to switch the light between night mode and normal mode",
+        "nl": "Gebruik deze actie om de lamp tussen nacht modus en gewone modus te schakelen"
+      },
+      "args": [
+        {
+          "name": "mode",
+          "type": "dropdown",
+          "values": [
+            {
+              "id": "normal",
+              "label": {
+                "en": "Normal Mode",
+                "nl": "Normale modus"
+              }
+            },
+            {
+              "id": "night",
+              "label": {
+                "en": "Night Mode",
+                "nl": "Nacht modus"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yeelightAmbilightSwitch",
+      "title": {
+        "en": "Switch ambilight",
+        "nl": "Schakel ambilight"
+      },
+      "titleFormatted": {
+        "en": "Switch ambilight to [[switch]]",
+        "nl": "Schakel ambilight naar [[switch]]"
+      },
+      "hint": {
+        "en": "Use this card to switch the ambilight on or off.",
+        "nl": "Gebruik deze actie om de ambilight van de de lamp te schakelen."
+      },
+      "args": [
+        {
+          "name": "switch",
+          "type": "dropdown",
+          "values": [
+            {
+              "id": "on",
+              "label": {
+                "en": "On",
+                "nl": "Aan"
+              }
+            },
+            {
+              "id": "off",
+              "label": {
+                "en": "Off",
+                "nl": "Uit"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "yeelightAmbilightDim",
+      "title": {
+        "en": "Dim ambilight",
+        "nl": "Dim ambilight"
+      },
+      "titleFormatted": {
+        "en": "Dim ambilight to [[brightness]] in [[duration_bg]] seconds",
+        "nl": "Dim ambilight naar [[brightness]] in [[duration_bg]] seconden"
+      },
+      "hint": {
+        "en": "Use this card to dim the ambilight and the duration for dimming in seconds.",
+        "nl": "Gebruik deze actie om de ambilight van de de lamp te dimmen met de ingestelde duur in seconden."
+      },
+      "args": [
+        {
+          "name": "brightness",
+          "type": "range",
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "label": "%",
+          "labelMultiplier": 100,
+          "labelDecimals": 0
+        },
+        {
+          "name": "duration_bg",
+          "type": "number",
+          "min": 0,
+          "max": 3600,
+          "step": 1,
+          "placeholder": {
+            "en": "Duration in seconds",
+            "nl": "Duur in seconden"
+          }
+        }
+      ]
+    },
+    {
+      "id": "yeelightAmbilightTemperature",
+      "title": {
+        "en": "Temperature ambilight",
+        "nl": "Temperature ambilight"
+      },
+      "titleFormatted": {
+        "en": "Set ambilight temperature to [[temperature]]",
+        "nl": "Zet ambilight temperatuur naar [[temperature]]"
+      },
+      "hint": {
+        "en": "Use this card to set the temperature of the ambilight. A higher value is a warmer temperature.",
+        "nl": "Gebruik deze actie om de temperatuur van de ambilight in te stellen. Een hogere waarde is een warmere temperatuur."
+      },
+      "args": [
+        {
+          "name": "temperature",
+          "type": "range",
+          "min": 0,
+          "max": 1,
+          "step": 0.01,
+          "label": "%",
+          "labelMultiplier": 100,
+          "labelDecimals": 0
+        }
+      ]
+    },
+    {
+      "id": "yeelightSaveState",
+      "title": {
+        "en": "Save current state",
+        "nl": "Opslaan huidige status"
+      },
+      "hint": {
+        "en": "Use this card to save the current state of the light so you can restore it later.",
+        "nl": "Gebruik deze actie om de status van de lamp op te slaan zodat deze later hersteld kan worden."
+      },
+      "args": []
+    },
+    {
+      "id": "yeelightSetState",
+      "title": {
+        "en": "Restore saved state",
+        "nl": "Herstellen opgeslagen status"
+      },
+      "hint": {
+        "en": "Use this card to set the state of the light to the previously saved state.",
+        "nl": "Gebruik deze actie om de status van de lamp in te stellen op de eerder opgeslagen status."
+      },
+      "args": []
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "name": {
+    "en": "Yeelights",
+    "nl": "Yeelights"
+  },
+  "images": {
+    "small": "drivers/yeelight/assets/images/small.jpg",
+    "large": "drivers/yeelight/assets/images/large.jpg",
+    "xlarge": "drivers/yeelight/assets/images/xlarge.jpg"
+  },
+  "class": "light",
+  "capabilities": [
+    "onoff",
+    "onoff.bg",
+    "dim",
+    "dim.bg",
+    "light_temperature",
+    "light_temperature.bg",
+    "light_hue",
+    "light_saturation",
+    "light_mode",
+    "light_mode.bg"
+  ],
+  "capabilitiesOptions": {
+    "dim": {
+      "opts": {
+        "duration": true
+      }
+    },
+    "dim.bg": {
+      "title": {
+        "en": "Dim ambilight",
+        "nl": "Dim ambilight"
+      },
+      "opts": {
+        "duration": true
+      }
+    },
+    "onoff.bg": {
+      "title": {
+        "en": "Switch ambilight",
+        "nl": "Schakel ambilight"
+      }
+    },
+    "light_mode.bg": {
+      "title": {
+        "en": "Light mode ambilight",
+        "nl": "Licht modus ambilight"
+      }
+    },
+    "light_temperature.bg": {
+      "title": {
+        "en": "Temperature ambilight",
+        "nl": "Temperatuur ambilight"
+      }
+    }
+  },
+  "pair": [
+    {
+      "id": "list_devices",
+      "template": "list_devices",
+      "navigation": {
+        "next": "add_yeelights"
+      }
+    },
+    {
+      "id": "add_yeelights",
+      "template": "add_devices"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Night Mode",
+    "nl": "Nacht modus"
+  },
+  "getable": true,
+  "setable": true
+}

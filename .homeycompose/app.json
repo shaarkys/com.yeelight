@@ -1,0 +1,59 @@
+{
+  "id": "com.yeelight",
+  "sdk": 3,
+  "brandColor": "#df2730",
+  "name": {
+    "en": "Yeelights LAN",
+    "nl": "Yeelights LAN"
+  },
+  "tags": {
+    "en": [
+      "yeelight",
+      "yeelights"
+    ],
+    "nl": [
+      "yeelight",
+      "yeelights"
+    ]
+  },
+  "version": "3.0.18",
+  "compatibility": ">=5.0.0",
+  "author": {
+    "name": "Bretislav Kubesa",
+    "email": "homey@solidewebservices.com"
+  },
+  "contributors": {
+    "developers": [
+      {
+        "name": "Jelger Haanstra",
+        "website": "https://github.com/shaarkys"
+      }
+    ]
+  },
+  "contributing": {
+    "donate": {
+      "paypal": {
+        "username": "bkubesa"
+      }
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/jghaanstra/com.yeelight/issues"
+  },
+  "homeyCommunityTopicId": 21134,
+  "source": "https://github.com/jghaanstra/com.yeelight",
+  "homepage": "https://community.athom.com/t/21134",
+  "images": {
+    "small": "./assets/images/small.jpg",
+    "large": "./assets/images/large.jpg",
+    "xlarge": "./assets/images/xlarge.jpg"
+  },
+  "category": "lights",
+  "description": {
+    "en": "Control Yeelights using Homey over your local network (LAN)",
+    "nl": "Bedien Yeelights via Homey over je lokale netwerk (LAN)"
+  },
+  "dependencies": {
+    "net": "*"
+  }
+}

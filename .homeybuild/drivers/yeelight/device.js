@@ -447,7 +447,8 @@ class YeelightDevice extends Homey.Device {
             }
 
           } catch (error) {
-            this.homey.app.log('Unable to process message because of error: '+ error);
+            this.homey.app.log(`${this.getName()} - socket.on props - unable to process message because of error: ${error}`);
+            this.homey.app.log(`${this.getName()} - Raw JSON content:`, parsed_message);
           }
         } else if (parsed_message.includes('result')) {
           try {
@@ -500,7 +501,8 @@ class YeelightDevice extends Homey.Device {
               }
             }
           } catch (error) {
-            this.homey.app.log('Unable to process message because of error: '+ error);
+            this.homey.app.log(`${this.getName()} - socket.on result - unable to process message because of error: ${error}`);
+            this.homey.app.log(`${this.getName()} - Raw JSON content:`, parsed_message);
           }
         }
       } catch (error) {
