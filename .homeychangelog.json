@@ -85,5 +85,8 @@
   },
   "3.0.19": {
     "en": "New developer, code adjustment, logging improvements, migrate to HomeyCompose, enhanced loging for JSON error"
+  },
+  "3.1.0": {
+    "en": "Improved the pairing process and added buffers for device JSON messages to prevent random errors"
   }
 }
