@@ -117,20 +117,16 @@ class YeelightDevice extends Homey.Device {
       async (valueObj, optsObj) => {
         try {
           if (!this.getCapabilityValue('onoff')) {
-            this.setCapabilityValue('onoff', true);
+            this.setCapabilityValue('onoff', true).catch(err => this.error('Error setting "onoff":', err));
           }
 
-          if (typeof valueObj.light_hue !== 'undefined') {
-            var hue = Math.round(valueObj.light_hue * 359);
-          } else {
-            var hue = (await this.getCapabilityValue('light_hue')) * 359;
-          }
+          let hue = (typeof valueObj.light_hue !== 'undefined')
+            ? Math.round(valueObj.light_hue * 359)
+            : Math.round((await this.getCapabilityValue('light_hue')) * 359);
 
-          if (typeof valueObj.light_saturation !== 'undefined') {
-            var saturation = Math.round(valueObj.light_saturation * 100);
-          } else {
-            var saturation = (await this.getCapabilityValue('light_saturation')) * 100;
-          }
+          let saturation = (typeof valueObj.light_saturation !== 'undefined')
+            ? Math.round(valueObj.light_saturation * 100)
+            : Math.round((await this.getCapabilityValue('light_saturation')) * 100);
 
           if (this.getData().model === 'ceiling4' || this.getData().model === 'ceiling10' || this.getData().model === 'ceiling20') {
             return await this.sendCommand(this.getData().id, '{"id":1,"method":"bg_set_hsv","params":[' + hue + ',' + saturation + ', "smooth", 500]}');
@@ -147,18 +143,19 @@ class YeelightDevice extends Homey.Device {
     this.registerCapabilityListener('light_temperature', async (value) => {
       try {
         if (!this.getCapabilityValue('onoff')) {
-          this.triggerCapabilityListener('onoff', true);
+          this.triggerCapabilityListener('onoff', true).catch(err => this.error('Error triggering "onoff":', err));
         }
 
+        let color_temp;
         if (this.getData().model === 'color') {
-          var color_temp = this.util.denormalize(value, 1700, 6500);
+          color_temp = this.util.denormalize(value, 1700, 6500);
         } else if (this.getData().model === 'lamp') {
-          var color_temp = this.util.denormalize(value, 2600, 5000);
+          color_temp = this.util.denormalize(value, 2600, 5000);
         } else {
-          var color_temp = this.util.denormalize(value, 2700, 6500);
+          color_temp = this.util.denormalize(value, 2700, 6500);
         }
         if (this.hasCapability('night_mode')) {
-          this.setCapabilityValue('night_mode', false);
+          this.setCapabilityValue('night_mode', false).catch(err => this.error('Error setting "night_mode":', err));
         }
         return await this.sendCommand(this.getData().id, '{"id":1,"method":"set_ct_abx","params":[' + color_temp + ', "smooth", 500]}');
       } catch (error) {
@@ -169,7 +166,7 @@ class YeelightDevice extends Homey.Device {
     this.registerCapabilityListener('light_temperature.bg', async (value) => {
       try {
         if (!this.getCapabilityValue('onoff.bg')) {
-          this.setCapabilityValue('onoff.bg', true);
+          this.setCapabilityValue('onoff.bg', true).catch(err => this.error('Error setting "onoff.bg":', err));
         }
         const color_temp = this.util.denormalize(value, 2700, 6500);
         return await this.sendCommand(this.getData().id, '{"id":1,"method":"bg_set_ct_abx","params":[' + color_temp + ', "smooth", 500]}');
@@ -207,7 +204,6 @@ class YeelightDevice extends Homey.Device {
 
   // HELPER FUNCTIONS
 
-  /* establish socket with online devices and update state upon connect */
   createDeviceSocket() {
     try {
       if (this.socket === null && this.connecting === false && this.connected === false) {
@@ -229,8 +225,12 @@ class YeelightDevice extends Homey.Device {
       this.connected = true;
 
       if (!this.getAvailable()) {
-        await this.setAvailable();
-        this.homey.app.log(`${this.getName()} - marked as available`);
+        try {
+          await this.setAvailable();
+          this.homey.app.log(`${this.getName()} - marked as available`);
+        } catch (err) {
+          this.error('Error setting device available:', err);
+        }
       }
 
       /* get current light status 4 seconds after connection */
@@ -290,8 +290,12 @@ class YeelightDevice extends Homey.Device {
 
         // Ensure the device is marked as available
         if (!this.getAvailable()) {
-          await this.setAvailable();
-          this.homey.app.log(`${this.getName()} - marked as available`);
+          try {
+            await this.setAvailable();
+            this.homey.app.log(`${this.getName()} - marked as available`);
+          } catch (err) {
+            this.error('Error setting device available:', err);
+          }
         }
 
         // Append incoming message to buffer
@@ -337,160 +341,276 @@ class YeelightDevice extends Homey.Device {
               if (parsedJSON.method && parsedJSON.method === 'props') {
                 // Handle 'props' messages
                 for (const key in parsedJSON.params) {
-                  // Switch block for handling each property
                   switch (key) {
                     case 'power':
-                      let onoff = parsedJSON.params.power === 'on';
-                      if (this.getCapabilityValue('onoff') !== onoff) {
-                        await this.setCapabilityValue('onoff', onoff);
+                      {
+                        let onoff = parsedJSON.params.power === 'on';
+                        if (this.getCapabilityValue('onoff') !== onoff) {
+                          try {
+                            await this.setCapabilityValue('onoff', onoff);
+                          } catch (err) {
+                            this.error('Error setting "onoff":', err);
+                          }
+                        }
                       }
                       break;
                     case 'main_power':
-                      let main_power = parsedJSON.params.main_power === 'on';
-                      if (this.getCapabilityValue('onoff') !== main_power) {
-                        await this.setCapabilityValue('onoff', main_power);
+                      {
+                        let main_power = parsedJSON.params.main_power === 'on';
+                        if (this.getCapabilityValue('onoff') !== main_power) {
+                          try {
+                            await this.setCapabilityValue('onoff', main_power);
+                          } catch (err) {
+                            this.error('Error setting "onoff" for main_power:', err);
+                          }
+                        }
                       }
                       break;
                     case 'bg_power':
-                      if (this.hasCapability('onoff.bg')) {
-                        let bg_power = parsedJSON.params.bg_power === 'on';
-                        if (this.getCapabilityValue('onoff.bg') !== bg_power) {
-                          await this.setCapabilityValue('onoff.bg', bg_power);
+                      {
+                        if (this.hasCapability('onoff.bg')) {
+                          let bg_power = parsedJSON.params.bg_power === 'on';
+                          if (this.getCapabilityValue('onoff.bg') !== bg_power) {
+                            try {
+                              await this.setCapabilityValue('onoff.bg', bg_power);
+                            } catch (err) {
+                              this.error('Error setting "onoff.bg":', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'bright':
-                      var dim = parsedJSON.params.bright / 100;
-                      if (this.getCapabilityValue('dim') !== dim) {
-                        await this.setCapabilityValue('dim', dim);
+                      {
+                        var dim = parsedJSON.params.bright / 100;
+                        if (this.getCapabilityValue('dim') !== dim) {
+                          try {
+                            await this.setCapabilityValue('dim', dim);
+                          } catch (err) {
+                            this.error('Error setting "dim":', err);
+                          }
+                        }
                       }
                       break;
                     case 'active_bright':
-                      var active_dim = parsedJSON.params.active_bright / 100;
-                      if (this.getCapabilityValue('dim') !== active_dim) {
-                        await this.setCapabilityValue('dim', active_dim);
+                      {
+                        var active_dim = parsedJSON.params.active_bright / 100;
+                        if (this.getCapabilityValue('dim') !== active_dim) {
+                          try {
+                            await this.setCapabilityValue('dim', active_dim);
+                          } catch (err) {
+                            this.error('Error setting "dim" from active_bright:', err);
+                          }
+                        }
                       }
                       break;
                     case 'bg_bright':
-                      if (this.hasCapability('dim.bg')) {
-                        var dim_bg = parsedJSON.params.bg_bright / 100;
-                        if (this.getCapabilityValue('dim.bg') !== dim_bg) {
-                          await this.setCapabilityValue('dim.bg', dim_bg);
+                      {
+                        if (this.hasCapability('dim.bg')) {
+                          var dim_bg = parsedJSON.params.bg_bright / 100;
+                          if (this.getCapabilityValue('dim.bg') !== dim_bg) {
+                            try {
+                              await this.setCapabilityValue('dim.bg', dim_bg);
+                            } catch (err) {
+                              this.error('Error setting "dim.bg":', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'ct':
-                      if (this.getData().model === 'color' || this.getData().model === 'colorc') {
-                        var color_temp = this.util.clamp(1 - this.util.normalize(parsedJSON.params.ct, 1700, 6500), 0, 1);
-                      } else if (this.getData().model === 'lamp') {
-                        var color_temp = this.util.clamp(1 - this.util.normalize(parsedJSON.params.ct, 2600, 5000), 0, 1);
-                      } else {
-                        var color_temp = this.util.clamp(1 - this.util.normalize(parsedJSON.params.ct, 2700, 6500), 0, 1);
-                      }
-                      if (this.hasCapability('light_temperature')) {
-                        if (this.getCapabilityValue('light_temperature') !== this.util.clamp(color_temp, 0, 1)) {
-                          await this.setCapabilityValue('light_temperature', this.util.clamp(color_temp, 0, 1));
+                      {
+                        let color_temp;
+                        if (this.getData().model === 'color' || this.getData().model === 'colorc') {
+                          color_temp = this.util.clamp(1 - this.util.normalize(parsedJSON.params.ct, 1700, 6500), 0, 1);
+                        } else if (this.getData().model === 'lamp') {
+                          color_temp = this.util.clamp(1 - this.util.normalize(parsedJSON.params.ct, 2600, 5000), 0, 1);
+                        } else {
+                          color_temp = this.util.clamp(1 - this.util.normalize(parsedJSON.params.ct, 2700, 6500), 0, 1);
+                        }
+                        if (this.hasCapability('light_temperature')) {
+                          if (this.getCapabilityValue('light_temperature') !== this.util.clamp(color_temp, 0, 1)) {
+                            try {
+                              await this.setCapabilityValue('light_temperature', this.util.clamp(color_temp, 0, 1));
+                            } catch (err) {
+                              this.error('Error setting "light_temperature":', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'bg_ct':
-                      var color_temp = this.util.clamp(1 - this.util.normalize(parsedJSON.params.ct, 2700, 6500), 0, 1);
-                      if (this.hasCapability('light_temperature.bg')) {
-                        if (this.getCapabilityValue('light_temperature.bg') !== this.util.clamp(color_temp, 0, 1)) {
-                          await this.setCapabilityValue('light_temperature.bg', this.util.clamp(color_temp, 0, 1));
+                      {
+                        var color_temp = this.util.clamp(1 - this.util.normalize(parsedJSON.params.ct, 2700, 6500), 0, 1);
+                        if (this.hasCapability('light_temperature.bg')) {
+                          if (this.getCapabilityValue('light_temperature.bg') !== this.util.clamp(color_temp, 0, 1)) {
+                            try {
+                              await this.setCapabilityValue('light_temperature.bg', this.util.clamp(color_temp, 0, 1));
+                            } catch (err) {
+                              this.error('Error setting "light_temperature.bg":', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'rgb':
-                      var color = tinycolor(parsedJSON.params.rgb.toString(16));
-                      var hsv = color.toHsv();
-                      var hue = Number((hsv.h / 359).toFixed(2));
-                      var saturation = Number(hsv.s.toFixed(2));
-                      if (this.hasCapability('light_hue') && this.hasCapability('light_saturation')) {
-                        if (this.getCapabilityValue('light_hue') !== this.util.clamp(hue, 0, 1)) {
-                          await this.setCapabilityValue('light_hue', this.util.clamp(hue, 0, 1));
-                        }
-                        if (this.getCapabilityValue('light_saturation') !== saturation) {
-                          await this.setCapabilityValue('light_saturation', saturation);
+                      {
+                        var color = tinycolor(parsedJSON.params.rgb.toString(16));
+                        var hsv = color.toHsv();
+                        var hue = Number((hsv.h / 359).toFixed(2));
+                        var saturation = Number(hsv.s.toFixed(2));
+                        if (this.hasCapability('light_hue') && this.hasCapability('light_saturation')) {
+                          if (this.getCapabilityValue('light_hue') !== this.util.clamp(hue, 0, 1)) {
+                            try {
+                              await this.setCapabilityValue('light_hue', this.util.clamp(hue, 0, 1));
+                            } catch (err) {
+                              this.error('Error setting "light_hue":', err);
+                            }
+                          }
+                          if (this.getCapabilityValue('light_saturation') !== saturation) {
+                            try {
+                              await this.setCapabilityValue('light_saturation', saturation);
+                            } catch (err) {
+                              this.error('Error setting "light_saturation":', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'bg_rgb':
-                      var rgb_color = tinycolor(parsedJSON.params.bg_rgb.toString(16));
-                      var rgb_hsv = rgb_color.toHsv();
-                      var rgb_hue = Number((rgb_hsv.h / 359).toFixed(2));
-                      var rgb_saturation = Number(rgb_hsv.s.toFixed(2));
-                      if (this.hasCapability('light_hue') && this.hasCapability('light_saturation')) {
-                        if (this.getCapabilityValue('light_hue') !== this.util.clamp(rgb_hue, 0, 1)) {
-                          await this.setCapabilityValue('light_hue', this.util.clamp(rgb_hue, 0, 1));
-                        }
-                        if (this.getCapabilityValue('light_saturation') !== rgb_saturation) {
-                          await this.setCapabilityValue('light_saturation', rgb_saturation);
+                      {
+                        var rgb_color = tinycolor(parsedJSON.params.bg_rgb.toString(16));
+                        var rgb_hsv = rgb_color.toHsv();
+                        var rgb_hue = Number((rgb_hsv.h / 359).toFixed(2));
+                        var rgb_saturation = Number(rgb_hsv.s.toFixed(2));
+                        if (this.hasCapability('light_hue') && this.hasCapability('light_saturation')) {
+                          if (this.getCapabilityValue('light_hue') !== this.util.clamp(rgb_hue, 0, 1)) {
+                            try {
+                              await this.setCapabilityValue('light_hue', this.util.clamp(rgb_hue, 0, 1));
+                            } catch (err) {
+                              this.error('Error setting "light_hue" from bg_rgb:', err);
+                            }
+                          }
+                          if (this.getCapabilityValue('light_saturation') !== rgb_saturation) {
+                            try {
+                              await this.setCapabilityValue('light_saturation', rgb_saturation);
+                            } catch (err) {
+                              this.error('Error setting "light_saturation" from bg_rgb:', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'hue':
-                      var hue = parsedJSON.params.hue / 359;
-                      if (this.hasCapability('light_hue')) {
-                        if (this.getCapabilityValue('light_hue') !== this.util.clamp(hue, 0, 1)) {
-                          await this.setCapabilityValue('light_hue', this.util.clamp(hue, 0, 1));
+                      {
+                        var hue = parsedJSON.params.hue / 359;
+                        if (this.hasCapability('light_hue')) {
+                          if (this.getCapabilityValue('light_hue') !== this.util.clamp(hue, 0, 1)) {
+                            try {
+                              await this.setCapabilityValue('light_hue', this.util.clamp(hue, 0, 1));
+                            } catch (err) {
+                              this.error('Error setting "light_hue" from hue:', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'bg_hue':
-                      var bg_hue = parsedJSON.params.bg_hue / 359;
-                      if (this.hasCapability('light_hue')) {
-                        if (this.getCapabilityValue('light_hue') !== this.util.clamp(bg_hue, 0, 1)) {
-                          await this.setCapabilityValue('light_hue', this.util.clamp(bg_hue, 0, 1));
+                      {
+                        var bg_hue = parsedJSON.params.bg_hue / 359;
+                        if (this.hasCapability('light_hue')) {
+                          if (this.getCapabilityValue('light_hue') !== this.util.clamp(bg_hue, 0, 1)) {
+                            try {
+                              await this.setCapabilityValue('light_hue', this.util.clamp(bg_hue, 0, 1));
+                            } catch (err) {
+                              this.error('Error setting "light_hue" from bg_hue:', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'sat':
-                      var saturation = parsedJSON.params.sat / 100;
-                      if (this.hasCapability('light_saturation')) {
-                        if (this.getCapabilityValue('light_saturation') !== saturation) {
-                          await this.setCapabilityValue('light_saturation', saturation);
+                      {
+                        var saturation = parsedJSON.params.sat / 100;
+                        if (this.hasCapability('light_saturation')) {
+                          if (this.getCapabilityValue('light_saturation') !== saturation) {
+                            try {
+                              await this.setCapabilityValue('light_saturation', saturation);
+                            } catch (err) {
+                              this.error('Error setting "light_saturation" from sat:', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'bg_sat':
-                      var bg_saturation = parsedJSON.params.bg_sat / 100;
-                      if (this.hasCapability('light_saturation')) {
-                        if (this.getCapabilityValue('light_saturation') !== bg_saturation) {
-                          await this.setCapabilityValue('light_saturation', bg_saturation);
+                      {
+                        var bg_saturation = parsedJSON.params.bg_sat / 100;
+                        if (this.hasCapability('light_saturation')) {
+                          if (this.getCapabilityValue('light_saturation') !== bg_saturation) {
+                            try {
+                              await this.setCapabilityValue('light_saturation', bg_saturation);
+                            } catch (err) {
+                              this.error('Error setting "light_saturation" from bg_sat:', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'color_mode':
-                      if (this.hasCapability('light_mode')) {
-                        if (parsedJSON.params.color_mode === 2) {
-                          await this.setCapabilityValue('light_mode', 'temperature');
-                        } else {
-                          await this.setCapabilityValue('light_mode', 'color');
+                      {
+                        if (this.hasCapability('light_mode')) {
+                          let mode = parsedJSON.params.color_mode === 2 ? 'temperature' : 'color';
+                          if (this.getCapabilityValue('light_mode') !== mode) {
+                            try {
+                              await this.setCapabilityValue('light_mode', mode);
+                            } catch (err) {
+                              this.error('Error setting "light_mode":', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'bg_lmode':
-                      if (this.hasCapability('light_mode.bg')) {
-                        if (parsedJSON.params.bg_lmode === 2) {
-                          await this.setCapabilityValue('light_mode.bg', 'temperature');
-                        } else {
-                          await this.setCapabilityValue('light_mode.bg', 'color');
+                      {
+                        if (this.hasCapability('light_mode.bg')) {
+                          let mode = parsedJSON.params.bg_lmode === 2 ? 'temperature' : 'color';
+                          if (this.getCapabilityValue('light_mode.bg') !== mode) {
+                            try {
+                              await this.setCapabilityValue('light_mode.bg', mode);
+                            } catch (err) {
+                              this.error('Error setting "light_mode.bg":', err);
+                            }
+                          }
                         }
                       }
                       break;
                     case 'nl_br':
-                      if (parsedJSON.params.nl_br !== 0) {
-                        var dim = parsedJSON.params.nl_br / 100;
-                        if (this.getCapabilityValue('dim') !== dim) {
-                          await this.setCapabilityValue('dim', dim);
+                      {
+                        if (parsedJSON.params.nl_br !== 0) {
+                          var dim = parsedJSON.params.nl_br / 100;
+                          if (this.getCapabilityValue('dim') !== dim) {
+                            try {
+                              await this.setCapabilityValue('dim', dim);
+                            } catch (err) {
+                              this.error('Error setting "dim" from nl_br:', err);
+                            }
+                          }
                         }
-                      }
-                      if (this.hasCapability('night_mode')) {
-                        if (parsedJSON.params.active_mode == 0 && this.getCapabilityValue('night_mode') === true) {
-                          await this.setCapabilityValue('night_mode', false);
-                        } else if (parsedJSON.params.active_mode !== 0 && this.getCapabilityValue('night_mode') === false) {
-                          await this.setCapabilityValue('night_mode', true);
+                        if (this.hasCapability('night_mode')) {
+                          if (parsedJSON.params.active_mode == 0 && this.getCapabilityValue('night_mode') === true) {
+                            try {
+                              await this.setCapabilityValue('night_mode', false);
+                          } catch (err) {
+                            this.error('Error setting "night_mode" to false:', err);
+                          }
+                          } else if (parsedJSON.params.active_mode !== 0 && this.getCapabilityValue('night_mode') === false) {
+                            try {
+                              await this.setCapabilityValue('night_mode', true);
+                            } catch (err) {
+                              this.error('Error setting "night_mode" to true:', err);
+                            }
+                          }
                         }
                       }
                       break;
@@ -505,53 +625,81 @@ class YeelightDevice extends Homey.Device {
                   var hue = parsedJSON.result[5] / 359;
                   var saturation = parsedJSON.result[6] / 100;
 
+                  let color_temp;
                   if (this.getData().model === 'color') {
-                    var color_temp = this.util.normalize(parsedJSON.result[3], 1700, 6500);
+                    color_temp = this.util.normalize(parsedJSON.result[3], 1700, 6500);
                   } else if (this.getData().model === 'lamp') {
-                    var color_temp = this.util.normalize(parsedJSON.result[3], 2600, 5000);
+                    color_temp = this.util.normalize(parsedJSON.result[3], 2600, 5000);
                   } else {
-                    var color_temp = this.util.normalize(parsedJSON.result[3], 2700, 6500);
+                    color_temp = this.util.normalize(parsedJSON.result[3], 2700, 6500);
                   }
 
                   var color_mode = parsedJSON.result[2] == 2 ? 'temperature' : 'color';
 
                   if (parsedJSON.result[0] === 'on' && this.getCapabilityValue('onoff') !== true) {
-                    await this.setCapabilityValue('onoff', true);
+                    try {
+                      await this.setCapabilityValue('onoff', true);
+                    } catch (err) {
+                      this.error('Error setting "onoff" in result:', err);
+                    }
                   } else if (parsedJSON.result[0] === 'off' && this.getCapabilityValue('onoff') !== false) {
-                    await this.setCapabilityValue('onoff', false);
+                    try {
+                      await this.setCapabilityValue('onoff', false);
+                    } catch (err) {
+                      this.error('Error setting "onoff" to false in result:', err);
+                    }
                   }
 
                   if (this.getCapabilityValue('dim') !== dim) {
-                    await this.setCapabilityValue('dim', dim);
+                    try {
+                      await this.setCapabilityValue('dim', dim);
+                    } catch (err) {
+                      this.error('Error setting "dim" in result:', err);
+                    }
                   }
 
                   if (this.hasCapability('light_mode')) {
                     if (this.getCapabilityValue('light_mode') !== color_mode) {
-                      await this.setCapabilityValue('light_mode', color_mode);
+                      try {
+                        await this.setCapabilityValue('light_mode', color_mode);
+                      } catch (err) {
+                        this.error('Error setting "light_mode" in result:', err);
+                      }
                     }
                   }
 
                   if (this.hasCapability('light_temperature')) {
                     if (this.getCapabilityValue('light_temperature') !== this.util.clamp(color_temp, 0, 1)) {
-                      await this.setCapabilityValue('light_temperature', this.util.clamp(color_temp, 0, 1));
+                      try {
+                        await this.setCapabilityValue('light_temperature', this.util.clamp(color_temp, 0, 1));
+                      } catch (err) {
+                        this.error('Error setting "light_temperature" in result:', err);
+                      }
                     }
                   }
 
                   if (this.hasCapability('light_hue')) {
                     if (this.getCapabilityValue('light_hue') !== this.util.clamp(hue, 0, 1)) {
-                      await this.setCapabilityValue('light_hue', this.util.clamp(hue, 0, 1));
+                      try {
+                        await this.setCapabilityValue('light_hue', this.util.clamp(hue, 0, 1));
+                      } catch (err) {
+                        this.error('Error setting "light_hue" in result:', err);
+                      }
                     }
                   }
 
                   if (this.hasCapability('light_saturation')) {
                     if (this.getCapabilityValue('light_saturation') !== saturation) {
-                      await this.setCapabilityValue('light_saturation', saturation);
+                      try {
+                        await this.setCapabilityValue('light_saturation', saturation);
+                      } catch (err) {
+                        this.error('Error setting "light_saturation" in result:', err);
+                      }
                     }
                   }
                 }
               }
             } catch (error) {
-              // Log any unexpected errors in the 'data' handler
               this.error(error);
             }
 
@@ -563,13 +711,11 @@ class YeelightDevice extends Homey.Device {
           }
         }
       } catch (err) {
-        // Catch any unexpected errors from the initial try block
         this.error(err);
       }
     });
   }
 
-  /* send commands to devices using their socket connection */
   async sendCommand(id, command) {
     if (this.connecting && !this.connected) {
       throw new Error('Cannot send command: Socket is still connecting.');
@@ -583,7 +729,6 @@ class YeelightDevice extends Homey.Device {
     }
   }
 
-  /* check if device is connecting or connected */
   isConnected() {
     return this.connecting || this.connected;
   }
@@ -633,31 +778,31 @@ class YeelightDevice extends Homey.Device {
       }
 
       if (device.getCapabilityValue('onoff') !== savedState.onoff) {
-        await device.triggerCapabilityListener('onoff', savedState.onoff);
+        await device.triggerCapabilityListener('onoff', savedState.onoff).catch(err => this.error('Error triggering "onoff" in setState:', err));
       }
       if (device.getCapabilityValue('dim') !== savedState.dim) {
-        await device.triggerCapabilityListener('dim', savedState.dim);
+        await device.triggerCapabilityListener('dim', savedState.dim).catch(err => this.error('Error triggering "dim" in setState:', err));
       }
       if (device.hasCapability('light_temperature') && device.getCapabilityValue('light_temperature') !== savedState.light_temperature) {
-        await device.triggerCapabilityListener('light_temperature', savedState.light_temperature);
+        await device.triggerCapabilityListener('light_temperature', savedState.light_temperature).catch(err => this.error('Error triggering "light_temperature" in setState:', err));
       }
       if (device.hasCapability('light_hue') && device.getCapabilityValue('light_hue') !== savedState.light_hue) {
-        await device.triggerCapabilityListener('light_hue', savedState.light_hue);
+        await device.triggerCapabilityListener('light_hue', savedState.light_hue).catch(err => this.error('Error triggering "light_hue" in setState:', err));
       }
       if (device.hasCapability('light_saturation') && device.getCapabilityValue('light_saturation') !== savedState.light_saturation) {
-        await device.triggerCapabilityListener('light_saturation', savedState.light_saturation);
+        await device.triggerCapabilityListener('light_saturation', savedState.light_saturation).catch(err => this.error('Error triggering "light_saturation" in setState:', err));
       }
       if (device.hasCapability('night_mode') && device.getCapabilityValue('night_mode') !== savedState.night_mode) {
-        await device.triggerCapabilityListener('night_mode', savedState.night_mode);
+        await device.triggerCapabilityListener('night_mode', savedState.night_mode).catch(err => this.error('Error triggering "night_mode" in setState:', err));
       }
       if (device.hasCapability('onoff.bg') && device.getCapabilityValue('onoff.bg') !== savedState.onoff_bg) {
-        await device.triggerCapabilityListener('onoff.bg', savedState.onoff_bg);
+        await device.triggerCapabilityListener('onoff.bg', savedState.onoff_bg).catch(err => this.error('Error triggering "onoff.bg" in setState:', err));
       }
       if (device.hasCapability('dim.bg') && device.getCapabilityValue('dim.bg') !== savedState.dim_bg) {
-        await device.triggerCapabilityListener('dim.bg', savedState.dim_bg);
+        await device.triggerCapabilityListener('dim.bg', savedState.dim_bg).catch(err => this.error('Error triggering "dim.bg" in setState:', err));
       }
       if (device.hasCapability('light_temperature.bg') && device.getCapabilityValue('light_temperature.bg') !== savedState.light_temperature_bg) {
-        await device.triggerCapabilityListener('light_temperature.bg', savedState.light_temperature_bg);
+        await device.triggerCapabilityListener('light_temperature.bg', savedState.light_temperature_bg).catch(err => this.error('Error triggering "light_temperature.bg" in setState:', err));
       }
 
       return true;
