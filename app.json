@@ -58,6 +58,34 @@
     "net": "*"
   },
   "flow": {
+    "triggers": [
+      {
+        "id": "device_becomes_available",
+        "title": {
+          "en": "Light became available"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=yeelight"
+          }
+        ]
+      },
+      {
+        "id": "device_becomes_unavailable",
+        "title": {
+          "en": "Light became unavailable"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=yeelight"
+          }
+        ]
+      }
+    ],
     "conditions": [
       {
         "id": "yeelightNightmode",

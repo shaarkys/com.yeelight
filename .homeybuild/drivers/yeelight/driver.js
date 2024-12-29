@@ -52,14 +52,20 @@ class YeelightDriver extends Homey.Driver {
 
   async onPairListDevices() {
     try {
-      let result = await this.util.discover();
       let devices = [];
-
+      let result = await this.util.discover();
+      
+      if (!result || Object.keys(result).length === 0) {
+        this.homey.app.log('[YeelightDriver] No devices discovered during pairing.');
+        return devices; // Return an empty array if no devices are found
+      }
+      
       // for device identification purposes
 
       this.homey.app.log('Discovered devices:', result);
 
       for (let i in result) {
+
         var name = '';
         var model = '';
 

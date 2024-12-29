@@ -28,12 +28,26 @@ class YeelightDevice extends Homey.Device {
     this.connected = false;
 
     await this.setAvailable();
+  
     this.createDeviceSocket();
 
     // LISTENERS FOR UPDATING CAPABILITIES
-    this.registerCapabilityListener('onoff', async (value) => {
+    /*    this.registerCapabilityListener('onoff', async (value) => {
       const action = value ? 'on' : 'off';
       return await this.sendCommand(this.getData().id, '{"id": 1, "method": "set_power", "params":["' + action + '", "smooth", 500]}');
+    });*/
+
+    // When turning the light on, check the night_mode state
+    this.registerCapabilityListener('onoff', async (value) => {
+      if (!value) {
+        // Turning off as usual
+        return await this.sendCommand(this.getData().id, `{"id":1,"method":"set_power","params":["off","smooth",500]}`);
+      } else {
+        // Turning on
+        const nightMode = this.getCapabilityValue('night_mode');
+        const modeParam = nightMode ? ',5' : '';
+        return await this.sendCommand(this.getData().id, `{"id":1,"method":"set_power","params":["on","smooth",500${modeParam}]}`);
+      }
     });
 
     this.registerCapabilityListener('onoff.bg', async (value) => {
@@ -107,9 +121,26 @@ class YeelightDevice extends Homey.Device {
       }
     });
 
-    this.registerCapabilityListener('night_mode', async (value) => {
+    /*this.registerCapabilityListener('night_mode', async (value) => {
       const action = value ? '5' : '1';
       return await this.sendCommand(this.getData().id, '{"id": 1, "method": "set_power", "params":["on", "smooth", 500, ' + action + ']}');
+    });*/
+
+    // Store desired night mode state when off without sending command
+    this.registerCapabilityListener('night_mode', async (value) => {
+      const currentPower = this.getCapabilityValue('onoff');
+
+      // Always update the night_mode capability internally
+      await this.setCapabilityValue('night_mode', value);
+
+      if (currentPower) {
+        // Light is on, directly apply night mode by turning it on with mode=5 or reverting to mode=1
+        const action = value ? '5' : '1';
+        return await this.sendCommand(this.getData().id, `{"id":1,"method":"set_power","params":["on","smooth",500,${action}]}`);
+      } else {
+        // Light is off, just store the desired state. Actual mode will be applied when turning the light on.
+        return true;
+      }
     });
 
     this.registerMultipleCapabilityListener(
@@ -117,16 +148,12 @@ class YeelightDevice extends Homey.Device {
       async (valueObj, optsObj) => {
         try {
           if (!this.getCapabilityValue('onoff')) {
-            this.setCapabilityValue('onoff', true).catch(err => this.error('Error setting "onoff":', err));
+            this.setCapabilityValue('onoff', true).catch((err) => this.error('Error setting "onoff":', err));
           }
 
-          let hue = (typeof valueObj.light_hue !== 'undefined')
-            ? Math.round(valueObj.light_hue * 359)
-            : Math.round((await this.getCapabilityValue('light_hue')) * 359);
+          let hue = typeof valueObj.light_hue !== 'undefined' ? Math.round(valueObj.light_hue * 359) : Math.round((await this.getCapabilityValue('light_hue')) * 359);
 
-          let saturation = (typeof valueObj.light_saturation !== 'undefined')
-            ? Math.round(valueObj.light_saturation * 100)
-            : Math.round((await this.getCapabilityValue('light_saturation')) * 100);
+          let saturation = typeof valueObj.light_saturation !== 'undefined' ? Math.round(valueObj.light_saturation * 100) : Math.round((await this.getCapabilityValue('light_saturation')) * 100);
 
           if (this.getData().model === 'ceiling4' || this.getData().model === 'ceiling10' || this.getData().model === 'ceiling20') {
             return await this.sendCommand(this.getData().id, '{"id":1,"method":"bg_set_hsv","params":[' + hue + ',' + saturation + ', "smooth", 500]}');
@@ -143,7 +170,7 @@ class YeelightDevice extends Homey.Device {
     this.registerCapabilityListener('light_temperature', async (value) => {
       try {
         if (!this.getCapabilityValue('onoff')) {
-          this.triggerCapabilityListener('onoff', true).catch(err => this.error('Error triggering "onoff":', err));
+          this.triggerCapabilityListener('onoff', true).catch((err) => this.error('Error triggering "onoff":', err));
         }
 
         let color_temp;
@@ -154,9 +181,10 @@ class YeelightDevice extends Homey.Device {
         } else {
           color_temp = this.util.denormalize(value, 2700, 6500);
         }
+        /*
         if (this.hasCapability('night_mode')) {
-          this.setCapabilityValue('night_mode', false).catch(err => this.error('Error setting "night_mode":', err));
-        }
+          this.setCapabilityValue('night_mode', false).catch((err) => this.error('Error setting "night_mode":', err));
+        }*/
         return await this.sendCommand(this.getData().id, '{"id":1,"method":"set_ct_abx","params":[' + color_temp + ', "smooth", 500]}');
       } catch (error) {
         return Promise.reject(error);
@@ -166,7 +194,7 @@ class YeelightDevice extends Homey.Device {
     this.registerCapabilityListener('light_temperature.bg', async (value) => {
       try {
         if (!this.getCapabilityValue('onoff.bg')) {
-          this.setCapabilityValue('onoff.bg', true).catch(err => this.error('Error setting "onoff.bg":', err));
+          this.setCapabilityValue('onoff.bg', true).catch((err) => this.error('Error setting "onoff.bg":', err));
         }
         const color_temp = this.util.denormalize(value, 2700, 6500);
         return await this.sendCommand(this.getData().id, '{"id":1,"method":"bg_set_ct_abx","params":[' + color_temp + ', "smooth", 500]}');
@@ -227,6 +255,8 @@ class YeelightDevice extends Homey.Device {
       if (!this.getAvailable()) {
         try {
           await this.setAvailable();
+          this.homey.flow.getTriggerCard('device_becomes_available').trigger(this);
+          //this.homey.flow.getTriggerCard('device_becomes_available').trigger({ device: this });
           this.homey.app.log(`${this.getName()} - marked as available`);
         } catch (err) {
           this.error('Error setting device available:', err);
@@ -272,10 +302,12 @@ class YeelightDevice extends Homey.Device {
 
     this.socket.on('close', async (had_error) => {
       try {
-        this.connecting = false;
+        this.connecting = false;  
         this.connected = false;
         this.socket = null;
         await this.setUnavailable(this.homey.__('device.unreachable'));
+        // this.homey.flow.getTriggerCard('device_becomes_unavailable').trigger(this);
+        this.homey.flow.getTriggerCard('device_becomes_unavailable').trigger({ device: this });
         this.homey.app.log(`${this.getName()} - marked as NOT available or stil is NOT available`);
       } catch (error) {
         this.error(error);
@@ -292,6 +324,8 @@ class YeelightDevice extends Homey.Device {
         if (!this.getAvailable()) {
           try {
             await this.setAvailable();
+            //this.homey.flow.getTriggerCard('device_becomes_available').trigger({ device: this });
+            this.homey.flow.getTriggerCard('device_becomes_available').trigger(this);
             this.homey.app.log(`${this.getName()} - marked as available`);
           } catch (err) {
             this.error('Error setting device available:', err);
@@ -601,9 +635,9 @@ class YeelightDevice extends Homey.Device {
                           if (parsedJSON.params.active_mode == 0 && this.getCapabilityValue('night_mode') === true) {
                             try {
                               await this.setCapabilityValue('night_mode', false);
-                          } catch (err) {
-                            this.error('Error setting "night_mode" to false:', err);
-                          }
+                            } catch (err) {
+                              this.error('Error setting "night_mode" to false:', err);
+                            }
                           } else if (parsedJSON.params.active_mode !== 0 && this.getCapabilityValue('night_mode') === false) {
                             try {
                               await this.setCapabilityValue('night_mode', true);
@@ -778,31 +812,31 @@ class YeelightDevice extends Homey.Device {
       }
 
       if (device.getCapabilityValue('onoff') !== savedState.onoff) {
-        await device.triggerCapabilityListener('onoff', savedState.onoff).catch(err => this.error('Error triggering "onoff" in setState:', err));
+        await device.triggerCapabilityListener('onoff', savedState.onoff).catch((err) => this.error('Error triggering "onoff" in setState:', err));
       }
       if (device.getCapabilityValue('dim') !== savedState.dim) {
-        await device.triggerCapabilityListener('dim', savedState.dim).catch(err => this.error('Error triggering "dim" in setState:', err));
+        await device.triggerCapabilityListener('dim', savedState.dim).catch((err) => this.error('Error triggering "dim" in setState:', err));
       }
       if (device.hasCapability('light_temperature') && device.getCapabilityValue('light_temperature') !== savedState.light_temperature) {
-        await device.triggerCapabilityListener('light_temperature', savedState.light_temperature).catch(err => this.error('Error triggering "light_temperature" in setState:', err));
+        await device.triggerCapabilityListener('light_temperature', savedState.light_temperature).catch((err) => this.error('Error triggering "light_temperature" in setState:', err));
       }
       if (device.hasCapability('light_hue') && device.getCapabilityValue('light_hue') !== savedState.light_hue) {
-        await device.triggerCapabilityListener('light_hue', savedState.light_hue).catch(err => this.error('Error triggering "light_hue" in setState:', err));
+        await device.triggerCapabilityListener('light_hue', savedState.light_hue).catch((err) => this.error('Error triggering "light_hue" in setState:', err));
       }
       if (device.hasCapability('light_saturation') && device.getCapabilityValue('light_saturation') !== savedState.light_saturation) {
-        await device.triggerCapabilityListener('light_saturation', savedState.light_saturation).catch(err => this.error('Error triggering "light_saturation" in setState:', err));
+        await device.triggerCapabilityListener('light_saturation', savedState.light_saturation).catch((err) => this.error('Error triggering "light_saturation" in setState:', err));
       }
       if (device.hasCapability('night_mode') && device.getCapabilityValue('night_mode') !== savedState.night_mode) {
-        await device.triggerCapabilityListener('night_mode', savedState.night_mode).catch(err => this.error('Error triggering "night_mode" in setState:', err));
+        await device.triggerCapabilityListener('night_mode', savedState.night_mode).catch((err) => this.error('Error triggering "night_mode" in setState:', err));
       }
       if (device.hasCapability('onoff.bg') && device.getCapabilityValue('onoff.bg') !== savedState.onoff_bg) {
-        await device.triggerCapabilityListener('onoff.bg', savedState.onoff_bg).catch(err => this.error('Error triggering "onoff.bg" in setState:', err));
+        await device.triggerCapabilityListener('onoff.bg', savedState.onoff_bg).catch((err) => this.error('Error triggering "onoff.bg" in setState:', err));
       }
       if (device.hasCapability('dim.bg') && device.getCapabilityValue('dim.bg') !== savedState.dim_bg) {
-        await device.triggerCapabilityListener('dim.bg', savedState.dim_bg).catch(err => this.error('Error triggering "dim.bg" in setState:', err));
+        await device.triggerCapabilityListener('dim.bg', savedState.dim_bg).catch((err) => this.error('Error triggering "dim.bg" in setState:', err));
       }
       if (device.hasCapability('light_temperature.bg') && device.getCapabilityValue('light_temperature.bg') !== savedState.light_temperature_bg) {
-        await device.triggerCapabilityListener('light_temperature.bg', savedState.light_temperature_bg).catch(err => this.error('Error triggering "light_temperature.bg" in setState:', err));
+        await device.triggerCapabilityListener('light_temperature.bg', savedState.light_temperature_bg).catch((err) => this.error('Error triggering "light_temperature.bg" in setState:', err));
       }
 
       return true;
