@@ -17,7 +17,7 @@
       "yeelights"
     ]
   },
-  "version": "3.1.1",
+  "version": "3.1.2",
   "compatibility": ">=5.0.0",
   "author": {
     "name": "Bretislav Kubesa",
@@ -70,8 +70,7 @@
             "name": "device",
             "filter": "driver_id=yeelight"
           }
-        ],
-        "filter": "driver_id=yeelight"
+        ]
       },
       {
         "id": "device_becomes_unavailable",
@@ -84,8 +83,7 @@
             "name": "device",
             "filter": "driver_id=yeelight"
           }
-        ],
-        "filter": "driver_id=yeelight"
+        ]
       }
     ],
     "conditions": [
