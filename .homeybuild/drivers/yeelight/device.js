@@ -28,7 +28,7 @@ class YeelightDevice extends Homey.Device {
     this.connected = false;
 
     await this.setAvailable();
-  
+
     this.createDeviceSocket();
 
     // LISTENERS FOR UPDATING CAPABILITIES
@@ -255,8 +255,16 @@ class YeelightDevice extends Homey.Device {
       if (!this.getAvailable()) {
         try {
           await this.setAvailable();
-          this.homey.flow.getTriggerCard('device_becomes_available').trigger(this);
-          //this.homey.flow.getTriggerCard('device_becomes_available').trigger({ device: this });
+          // **Trigger Device-Specific Flow Trigger: device_becomes_available**
+          const deviceAvailableTrigger = this.homey.flow.getDeviceTriggerCard('device_becomes_available');
+          deviceAvailableTrigger
+            .trigger(this, {}, {})
+            .then(() => {
+              this.homey.app.log(`${this.getName()} - Flow triggered: device_becomes_available`);
+            })
+            .catch((err) => {
+              this.error('Error triggering device_becomes_available:', err);
+            });
           this.homey.app.log(`${this.getName()} - marked as available`);
         } catch (err) {
           this.error('Error setting device available:', err);
@@ -302,13 +310,21 @@ class YeelightDevice extends Homey.Device {
 
     this.socket.on('close', async (had_error) => {
       try {
-        this.connecting = false;  
+        this.connecting = false;
         this.connected = false;
         this.socket = null;
         await this.setUnavailable(this.homey.__('device.unreachable'));
-        // this.homey.flow.getTriggerCard('device_becomes_unavailable').trigger(this);
-        this.homey.flow.getTriggerCard('device_becomes_unavailable').trigger({ device: this });
-        this.homey.app.log(`${this.getName()} - marked as NOT available or stil is NOT available`);
+        // **Trigger Device-Specific Flow Trigger: device_becomes_unavailable**
+        const deviceUnavailableTrigger = this.homey.flow.getDeviceTriggerCard('device_becomes_unavailable');
+        deviceUnavailableTrigger
+          .trigger(this, {}, {})
+          .then(() => {
+            this.homey.app.log(`${this.getName()} - Flow triggered: device_becomes_unavailable`);
+          })
+          .catch((error) => {
+            this.error('Error triggering device_becomes_unavailable:', error);
+          });
+        this.homey.app.log(`${this.getName()} - marked as NOT available or still is NOT available`);
       } catch (error) {
         this.error(error);
       }
@@ -324,8 +340,17 @@ class YeelightDevice extends Homey.Device {
         if (!this.getAvailable()) {
           try {
             await this.setAvailable();
-            //this.homey.flow.getTriggerCard('device_becomes_available').trigger({ device: this });
-            this.homey.flow.getTriggerCard('device_becomes_available').trigger(this);
+            // **Trigger Device-Specific Flow Trigger: device_becomes_available**
+            const deviceAvailableTrigger = this.homey.flow.getDeviceTriggerCard('device_becomes_available');
+            deviceAvailableTrigger
+              .trigger(this, {}, {})
+              .then(() => {
+                this.homey.app.log(`${this.getName()} - Flow triggered: device_becomes_available`);
+              })
+              .catch((err) => {
+                this.error('Error triggering device_becomes_available:', err);
+              });
+
             this.homey.app.log(`${this.getName()} - marked as available`);
           } catch (err) {
             this.error('Error setting device available:', err);

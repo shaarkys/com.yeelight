@@ -2,9 +2,6 @@
 userdata
 userconf.json
 .homeyignore
-_CleanUp_
-app.json__NEW
-app.json__ORIG
 
 #node modules
 node_modules/*
@@ -16,14 +13,11 @@ env.json
 .project
 .settings
 
-
-
 # Added by Homey CLI
-/.homeybuild/
+.homeybuild/*
 .dependencygraph/data.json
 .dependencygraph/setting.json
 .vscode/settings.json
-lib/Communicate.js_bak
-drivers/RM4_pro/device.js_bak
 .vscode/launch.json
-/.homeybuild
+
+
