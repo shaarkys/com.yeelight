@@ -93,13 +93,13 @@ class YeelightDriver extends Homey.Driver {
             var model = 'bslamp';
           }
         } else if (result[i].model.startsWith('ceiling')) {
-          if (result[i].model == 'ceiling' || result[i].model == 'ceiling1' || result[i].model == 'ceiling2' || result[i].model == 'ceiling3') {
+          if (result[i].model == 'ceiling' || result[i].model == 'ceiling1' || result[i].model == 'ceiling2' || result[i].model == 'ceiling3' || result[i].model == 'ceiling5') {
             var name = this.homey.__('driver.yeelight_ceiling_light') + ' (' + result[i].address + ')';
             var model = 'ceiling';
           } else if (result[i].model == 'ceiling4') {
             var name = this.homey.__('driver.yeelight_ceiling_light') + ' (' + result[i].address + ')';
             var model = 'ceiling4';
-          } else if (result[i].model == 'ceiling5' || result[i].model == 'ceiling6' || result[i].model == 'ceiling7' || result[i].model == 'ceiling8' || result[i].model == 'ceiling9') {
+          } else if (result[i].model == 'ceiling6' || result[i].model == 'ceiling7' || result[i].model == 'ceiling8' || result[i].model == 'ceiling9') {
             var name = this.homey.__('driver.yeelight_ceiling_light') + ' (' + result[i].address + ')';
             var model = 'ceiling5+';
           } else if (result[i].model == 'ceiling10') {
