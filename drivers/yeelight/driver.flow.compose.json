@@ -4,18 +4,13 @@
       "id": "device_becomes_available",
       "title": {
         "en": "Light became available"
-      },
-      "args": [
-
-      ]
+      }
     },
     {
       "id": "device_becomes_unavailable",
       "title": {
         "en": "Light became unavailable"
-      },
-      "args": [
-      ]
+      }
     }
   ],
   "conditions": [
