@@ -97,5 +97,8 @@
   },
   "3.2.0": {
     "en": "Added triggers for lights availability checks and additional internal improvements"
+  },
+  "3.2.1": {
+    "en": "Additional internal improvements"
   }
 }
