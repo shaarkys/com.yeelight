@@ -17,7 +17,7 @@
       "yeelights"
     ]
   },
-  "version": "3.1.2",
+  "version": "3.2.1",
   "compatibility": ">=5.0.0",
   "author": {
     "name": "Bretislav Kubesa",
@@ -92,6 +92,34 @@
         "title": {
           "en": "Night Mode !{{is|is not}} on",
           "nl": "Nacht modus !{{is|is niet}} aan"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=yeelight"
+          }
+        ]
+      },
+      {
+        "id": "device_is_available",
+        "title": {
+          "en": "Light is available",
+          "nl": "Lamp is beschikbaar"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device",
+            "filter": "driver_id=yeelight"
+          }
+        ]
+      },
+      {
+        "id": "device_is_unavailable",
+        "title": {
+          "en": "Light is unavailable",
+          "nl": "Lamp is onbeschikbaar"
         },
         "args": [
           {
