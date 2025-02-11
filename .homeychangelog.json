@@ -100,5 +100,8 @@
   },
   "3.2.1": {
     "en": "Additional internal improvements"
+  },
+  "3.2.2": {
+    "en": "Added AND cards for lights availability"
   }
 }
