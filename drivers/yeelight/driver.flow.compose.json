@@ -25,16 +25,8 @@
     {
       "id": "device_is_available",
       "title": {
-        "en": "Light is available",
-        "nl": "Lamp is beschikbaar"
-      },
-      "args": []
-    },
-    {
-      "id": "device_is_unavailable",
-      "title": {
-        "en": "Light is unavailable",
-        "nl": "Lamp is onbeschikbaar"
+        "en": "Light !{{is|is not}} available",
+        "nl": "Lamp !{{is|is niet}} beschikbaar"
       },
       "args": []
     }

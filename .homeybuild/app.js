@@ -20,15 +20,13 @@ class YeelightApp extends Homey.App {
 
     /* FLOW CARDS */
 
-    // Register the "device_is_available" condition
-    this.homey.flow.getConditionCard('device_is_available').registerRunListener(async ({ device }) => {
-      return device.getAvailable();
+    // Register the "device_is_(un)available" condition
+    this.homey.flow.getConditionCard('device_is_available').registerRunListener(async (args, state) => {
+      const available = args.device.getAvailable();
+      // If the card was inverted (i.e. the user selected "is not"), return the opposite value.
+      return args.negate ? !available : available;
     });
 
-    // Register the "device_is_unavailable" condition
-    this.homey.flow.getConditionCard('device_is_unavailable').registerRunListener(async ({ device }) => {
-      return !device.getAvailable();
-    });
 
     this.homey.flow.getConditionCard('yeelightNightmode').registerRunListener(async (args) => {
       return await args.device.getCapabilityValue('night_mode');
