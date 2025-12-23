@@ -60,14 +60,25 @@ class Util {
       this.homey.app.log('[Util] Starting to listen for advertisements...');
       let localAddress = await this.homey.cloud.getLocalAddress();
       this.homey.app.log(`[Util] Local address resolved: ${localAddress}`);
+      const interfaceAddress = this.extractInterfaceAddress(localAddress);
 
       advertisements.bind(1982, () => {
         if (advertisements) {
-          advertisements.addMembership('239.255.255.250');
-          advertisements.setBroadcast(true);
-          advertisements.setMulticastTTL(255);
-          advertisements.setMulticastInterface(localAddress.slice(0, -3));
-          this.homey.app.log('[Util] UDP socket bound and configured for multicast.');
+          try {
+            advertisements.addMembership('239.255.255.250');
+            advertisements.setBroadcast(true);
+            advertisements.setMulticastTTL(255);
+            if (interfaceAddress) {
+              advertisements.setMulticastInterface(interfaceAddress);
+              this.homey.app.log(
+                `[Util] UDP socket bound and configured for multicast on ${interfaceAddress}.`
+              );
+            } else {
+              this.homey.app.log('[Util] UDP socket bound for multicast using default interface.');
+            }
+          } catch (error) {
+            this.homey.app.error('[Util] Failed to configure UDP multicast:', error);
+          }
         }
       });
 
@@ -202,6 +213,15 @@ class Util {
 
   clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
+  }
+
+  extractInterfaceAddress(address) {
+    if (!address || typeof address !== 'string') return null;
+    const match = address.match(/^\[?([^\]]+?)\]?:\d+$/); // strip port, keep IPv4 or IPv6 host
+    if (match && match[1]) {
+      return match[1];
+    }
+    return address;
   }
 }
 
