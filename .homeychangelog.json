@@ -106,5 +106,8 @@
   },
   "3.2.3": {
     "en": "Added AND cards for lights availability"
+  },
+  "3.2.4": {
+    "en": "Fixes crash on Homey SHS and some other minor code improvements"
   }
 }
