@@ -15,9 +15,11 @@ class YeelightDevice extends Homey.Device {
 
     /* Initialize buffer to accumulate incoming data */
     this.buffer = '';
+    this.updateAddedDevicesTimeout = null;
+    this.getPropTimeout = null;
 
     /* update the paired devices list when a device is initialized */
-    this.homey.setTimeout(async () => {
+    this.updateAddedDevicesTimeout = this.homey.setTimeout(async () => {
       await this.util.fillAddedDevices();
     }, 2000);
 
@@ -57,6 +59,7 @@ class YeelightDevice extends Homey.Device {
 
     this.registerCapabilityListener('dim', async (value, opts) => {
       try {
+        opts = opts || {};
         let brightness = value === 0 ? 1 : value * 100;
         // Logic which will toggle between night_mode and normal_mode when brightness is set to 0 or 100 two times within 5 seconds
         if (this.hasCapability('night_mode') && opts.duration === undefined) {
@@ -86,8 +89,8 @@ class YeelightDevice extends Homey.Device {
           }
         }
 
-        if (opts.duration === undefined || typeof opts.duration == 'undefined') {
-          opts.duration = '500';
+        if (typeof opts.duration === 'undefined') {
+          opts.duration = 500;
         }
 
         if (value === 0 && !this.hasCapability('night_mode')) {
@@ -111,8 +114,9 @@ class YeelightDevice extends Homey.Device {
 
     this.registerCapabilityListener('dim.bg', async (value, opts) => {
       try {
-        if (opts.duration === undefined || typeof opts.duration == 'undefined') {
-          opts.duration = '500';
+        opts = opts || {};
+        if (typeof opts.duration === 'undefined') {
+          opts.duration = 500;
         }
         let brightness = value === 0 ? 1 : value * 100;
         return await this.sendCommand(this.getData().id, '{"id":1,"method":"bg_set_bright","params":[' + brightness + ', "smooth", ' + opts.duration + ']}');
@@ -130,9 +134,6 @@ class YeelightDevice extends Homey.Device {
     this.registerCapabilityListener('night_mode', async (value) => {
       const currentPower = this.getCapabilityValue('onoff');
 
-      // Always update the night_mode capability internally
-      await this.setCapabilityValue('night_mode', value);
-
       if (currentPower) {
         // Light is on, directly apply night mode by turning it on with mode=5 or reverting to mode=1
         const action = value ? '5' : '1';
@@ -148,7 +149,7 @@ class YeelightDevice extends Homey.Device {
       async (valueObj, optsObj) => {
         try {
           if (!this.getCapabilityValue('onoff')) {
-            this.setCapabilityValue('onoff', true).catch((err) => this.error('Error setting "onoff":', err));
+            await this.triggerCapabilityListener('onoff', true).catch((err) => this.error('Error triggering "onoff":', err));
           }
 
           let hue = typeof valueObj.light_hue !== 'undefined' ? Math.round(valueObj.light_hue * 359) : Math.round((await this.getCapabilityValue('light_hue')) * 359);
@@ -170,7 +171,7 @@ class YeelightDevice extends Homey.Device {
     this.registerCapabilityListener('light_temperature', async (value) => {
       try {
         if (!this.getCapabilityValue('onoff')) {
-          this.triggerCapabilityListener('onoff', true).catch((err) => this.error('Error triggering "onoff":', err));
+          await this.triggerCapabilityListener('onoff', true).catch((err) => this.error('Error triggering "onoff":', err));
         }
 
         let color_temp;
@@ -194,7 +195,7 @@ class YeelightDevice extends Homey.Device {
     this.registerCapabilityListener('light_temperature.bg', async (value) => {
       try {
         if (!this.getCapabilityValue('onoff.bg')) {
-          this.setCapabilityValue('onoff.bg', true).catch((err) => this.error('Error setting "onoff.bg":', err));
+          await this.triggerCapabilityListener('onoff.bg', true).catch((err) => this.error('Error triggering "onoff.bg":', err));
         }
         const color_temp = this.util.denormalize(value, 2700, 6500);
         return await this.sendCommand(this.getData().id, '{"id":1,"method":"bg_set_ct_abx","params":[' + color_temp + ', "smooth", 500]}');
@@ -211,6 +212,8 @@ class YeelightDevice extends Homey.Device {
   async onDeleted() {
     try {
       this.homey.clearTimeout(this.reconnect);
+      this.homey.clearTimeout(this.updateAddedDevicesTimeout);
+      this.homey.clearTimeout(this.getPropTimeout);
       if (this.socket) {
         this.socket.destroy();
       }
@@ -222,6 +225,8 @@ class YeelightDevice extends Homey.Device {
   async onUninit() {
     try {
       this.homey.clearTimeout(this.reconnect);
+      this.homey.clearTimeout(this.updateAddedDevicesTimeout);
+      this.homey.clearTimeout(this.getPropTimeout);
       if (this.socket) {
         this.socket.destroy();
       }
@@ -243,9 +248,15 @@ class YeelightDevice extends Homey.Device {
         });
       } else {
         this.homey.app.log('Yeelight - trying to create socket, but connection not cleaned up previously.');
+        return;
       }
     } catch (error) {
       this.homey.app.log('Yeelight - error creating socket: ' + error);
+      return;
+    }
+
+    if (!this.socket) {
+      return;
     }
 
     this.socket.on('connect', async () => {
@@ -272,7 +283,8 @@ class YeelightDevice extends Homey.Device {
       }
 
       /* get current light status 4 seconds after connection */
-      this.homey.setTimeout(() => {
+      this.homey.clearTimeout(this.getPropTimeout);
+      this.getPropTimeout = this.homey.setTimeout(() => {
         if (this.socket !== null) {
           this.socket.write('{"id":1,"method":"get_prop","params":["power", "bright", "color_mode", "ct", "rgb", "hue", "sat"]}' + '\r\n');
         }
@@ -361,6 +373,11 @@ class YeelightDevice extends Homey.Device {
 
         // Append incoming message to buffer
         this.buffer += message.toString();
+
+        if (this.buffer.length > 65536) {
+          this.homey.app.log(`${this.getName()} - buffer exceeded 64KB, resetting.`);
+          this.buffer = '';
+        }
 
         // Remove 'ok' responses and carriage returns to simplify parsing
         this.buffer = this.buffer

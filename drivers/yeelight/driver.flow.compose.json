@@ -21,6 +21,14 @@
         "nl": "Nacht modus !{{is|is niet}} aan"
       },
       "args": []
+    },
+    {
+      "id": "device_is_available",
+      "title": {
+        "en": "Light !{{is|is not}} available",
+        "nl": "Lamp !{{is|is niet}} beschikbaar"
+      },
+      "args": []
     }
   ],
   "actions": [

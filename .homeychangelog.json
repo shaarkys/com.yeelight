@@ -97,5 +97,14 @@
   },
   "3.2.0": {
     "en": "Added triggers for lights availability checks and additional internal improvements"
+  },
+  "3.2.1": {
+    "en": "Additional internal improvements"
+  },
+  "3.2.2": {
+    "en": "Added AND cards for lights availability"
+  },
+  "3.2.3": {
+    "en": "Added AND cards for lights availability"
   }
 }
