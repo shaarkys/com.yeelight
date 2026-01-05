@@ -29,7 +29,7 @@ class YeelightDevice extends Homey.Device {
     this.connecting = false;
     this.connected = false;
 
-    await this.setAvailable();
+    this.setAvailable().catch((err) => this.error('Error setting device available on init:', err));
 
     this.createDeviceSocket();
 
@@ -326,7 +326,14 @@ class YeelightDevice extends Homey.Device {
         this.connected = false;
         this.socket = null;
         if (this.getAvailable()) {
-          await this.setUnavailable(this.homey.__('device.unreachable'));
+          try {
+            await this.setUnavailable(this.homey.__('device.unreachable'));
+          } catch (error) {
+            if (error && (error.statusCode === 404 || (error.message && error.message.includes('DeviceLocal')))) {
+              return;
+            }
+            throw error;
+          }
           // **Trigger Device-Specific Flow Trigger: device_becomes_unavailable**
           const deviceUnavailableTrigger = this.homey.flow.getDeviceTriggerCard('device_becomes_unavailable');
           deviceUnavailableTrigger

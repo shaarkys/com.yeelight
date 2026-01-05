@@ -19,6 +19,7 @@ const typeCapabilityMap = {
   'ceiling5+': ['onoff', 'onoff.bg', 'dim', 'dim.bg', 'light_hue', 'light_saturation', 'light_temperature', 'light_temperature.bg', 'light_mode', 'light_mode.bg', 'night_mode'],
   ceiling10: ['onoff', 'onoff.bg', 'dim', 'dim.bg', 'light_hue', 'light_saturation', 'light_temperature', 'light_temperature.bg', 'light_mode', 'light_mode.bg', 'night_mode'],
   ceiling15: ['onoff', 'dim', 'light_temperature', 'light_mode', 'night_mode'],
+  ceiling5: ['onoff', 'dim', 'light_temperature', 'light_mode', 'night_mode'],
   ceiling20: ['onoff', 'onoff.bg', 'dim', 'dim.bg', 'light_hue', 'light_saturation', 'light_temperature', 'light_temperature.bg', 'light_mode', 'light_mode.bg', 'night_mode'],
   desklamp: ['onoff', 'dim', 'light_temperature'],
   lamp: ['onoff', 'dim', 'light_temperature'],
@@ -39,6 +40,7 @@ const typeIconMap = {
   'ceiling5+': 'ceiling.svg',
   ceiling10: 'ceiling10.svg',
   ceiling15: 'ceiling4.svg',
+  ceiling5: 'ceiling.svg',
   ceiling20: 'ceiling4.svg',
   desklamp: 'desklamp.svg',
   lamp: 'desklamp.svg',
@@ -53,6 +55,7 @@ class YeelightDriver extends Homey.Driver {
   async onPairListDevices() {
     try {
       let devices = [];
+      await this.util.fillAddedDevices();
       let result = await this.util.discover();
       
       if (!result || Object.keys(result).length === 0) {
@@ -99,7 +102,10 @@ class YeelightDriver extends Homey.Driver {
           } else if (result[i].model == 'ceiling4') {
             var name = this.homey.__('driver.yeelight_ceiling_light') + ' (' + result[i].address + ')';
             var model = 'ceiling4';
-          } else if (result[i].model == 'ceiling5' || result[i].model == 'ceiling6' || result[i].model == 'ceiling7' || result[i].model == 'ceiling8' || result[i].model == 'ceiling9') {
+          } else if (result[i].model == 'ceiling5') {
+            var name = this.homey.__('driver.yeelight_ceiling_light') + ' (' + result[i].address + ')';
+            var model = 'ceiling5';
+          } else if (result[i].model == 'ceiling6' || result[i].model == 'ceiling7' || result[i].model == 'ceiling8' || result[i].model == 'ceiling9') {
             var name = this.homey.__('driver.yeelight_ceiling_light') + ' (' + result[i].address + ')';
             var model = 'ceiling5+';
           } else if (result[i].model == 'ceiling10') {
