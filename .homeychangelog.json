@@ -109,5 +109,8 @@
   },
   "3.2.4": {
     "en": "Fixes crash on Homey SHS and some other minor code improvements"
+  },
+  "3.2.5": {
+    "en": "Pairing process and logging enhancements + adjustments for ceiling5 (no color support)"
   }
 }
