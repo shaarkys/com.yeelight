@@ -4,6 +4,7 @@ const Homey = require('homey');
 const net = require('net');
 const tinycolor = require('tinycolor2');
 const Util = require('../../lib/util.js');
+const { getCapabilitiesForModel } = require('../../lib/yeelight-models.js');
 
 class YeelightDevice extends Homey.Device {
   async onInit() {
@@ -28,6 +29,8 @@ class YeelightDevice extends Homey.Device {
     this.reconnect = null;
     this.connecting = false;
     this.connected = false;
+
+    await this.syncCapabilities();
 
     this.setAvailable().catch((err) => this.error('Error setting device available on init:', err));
 
@@ -236,6 +239,31 @@ class YeelightDevice extends Homey.Device {
   }
 
   // HELPER FUNCTIONS
+
+  async syncCapabilities() {
+    const expectedCapabilities = getCapabilitiesForModel(this.getData().model);
+    const currentCapabilities = this.getCapabilities();
+
+    for (const capability of currentCapabilities) {
+      if (!expectedCapabilities.includes(capability)) {
+        try {
+          await this.removeCapability(capability);
+        } catch (error) {
+          this.error(`Error removing capability "${capability}" during sync:`, error);
+        }
+      }
+    }
+
+    for (const capability of expectedCapabilities) {
+      if (!this.hasCapability(capability)) {
+        try {
+          await this.addCapability(capability);
+        } catch (error) {
+          this.error(`Error adding capability "${capability}" during sync:`, error);
+        }
+      }
+    }
+  }
 
   createDeviceSocket() {
     try {
