@@ -112,5 +112,8 @@
   },
   "3.2.5": {
     "en": "Pairing process and logging enhancements + adjustments for ceiling5 (no color support)"
+  },
+  "3.2.6": {
+    "en": "Fixed yeelink.light.ceiling6 misclassification so it no longer gets ambilight capabilities"
   }
 }
